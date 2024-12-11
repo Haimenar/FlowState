@@ -15,9 +15,11 @@ class FlowStateTimer(QWidget):
 
         self.work_duration = 25 * 60
         self.break_duration = 5 * 60
+        self.long_break_duration = 30 * 60
         self.time_left = self.work_duration
         self.running = False
         self.mode = "Work"
+        self.cycle_index = 0
 
         layout = QVBoxLayout()
 
@@ -90,9 +92,19 @@ class FlowStateTimer(QWidget):
         """Switch between work and break modes."""
         if self.time_left == 0:
             if self.mode == "Work":
-                self.mode = "Break"  # Switch to break time
-                self.time_left = self.break_duration
-                self.mode_label.setText(self.mode)
+                if self.cycle_index > 2:
+                    self.cycle_index = 0
+                    self.mode = "Long Break"
+                    self.time_left = self.long_break_duration
+                    self.mode_label.setText(self.mode)
+
+                      # Switch to break time
+                else:
+                    self.cycle_index += 1
+                    self.mode = "Break"  # Switch to break time
+                    self.time_left = self.break_duration
+                    self.mode_label.setText(self.mode)
+
             else:
                 self.mode = "Work"  # Switch back to work time
                 self.time_left = self.work_duration
