@@ -10,7 +10,7 @@ class FlowStateTimer(QWidget):
         super().__init__()
 
         self.setWindowTitle("FlowState Timer")
-        self.setWindowIcon(QIcon('assets/timer_icon.png'))
+        self.setWindowIcon(QIcon('assets/timer_icon.ico'))
         self.setStyleSheet("background-color: #214E34; color: white;")
 
         self.work_duration = 25 * 60
@@ -34,7 +34,7 @@ class FlowStateTimer(QWidget):
         self.timer_label.setFont(QFont('Arial', 48))
         self.timer_label.setAlignment(Qt.AlignCenter)
         layout.addWidget(self.timer_label)
-
+        
         # Start and Stop buttons
         self.start_button = QPushButton("Start", self)
         self.start_button.setStyleSheet("background-color: #30734C; color: white; font-size: 18px; padding: 10px;")
@@ -91,6 +91,7 @@ class FlowStateTimer(QWidget):
     def switch_mode(self):
         """Switch between work and break modes."""
         if self.time_left == 0:
+            self.activateWindow()
             if self.mode == "Work":
                 if self.cycle_index > 2:
                     self.cycle_index = 0
