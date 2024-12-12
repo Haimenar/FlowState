@@ -1,9 +1,8 @@
 import sys
 from playsound import playsound
 from PyQt5.QtCore import QTimer, Qt
-from PyQt5.QtWidgets import QApplication, QWidget, QVBoxLayout, QLabel, QPushButton
+from PyQt5.QtWidgets import QApplication, QWidget, QVBoxLayout, QLabel, QPushButton, QMenuBar, QMenu
 from PyQt5.QtGui import QIcon, QFont
-from PyQt5.QtWidgets import QSystemTrayIcon, QMenu
 
 class FlowStateTimer(QWidget):
     def __init__(self):
@@ -23,6 +22,21 @@ class FlowStateTimer(QWidget):
 
         layout = QVBoxLayout()
 
+        # Menu Bar
+        menu_bar = QMenuBar(self)
+        themes_menu = menu_bar.addMenu("Themes")
+        themedictionary = {
+            "Forest": ["#214E34", "#30734C", "white"],
+            "Dark": ["#202020", "#383D3B", "grey"],
+            "Light": ["#CCCCCC", "#E0E0E0", "black"]
+        }
+
+        for theme_entry, colors in themedictionary.items():
+            action = themes_menu.addAction(theme_entry)
+            action.triggered.connect(lambda _, c=colors: self.change_theme(c))
+
+        layout.setMenuBar(menu_bar)
+
         # Mode display (Work/Break)
         self.mode_label = QLabel(self.mode, self)
         self.mode_label.setFont(QFont('Arial', 24))
@@ -34,7 +48,7 @@ class FlowStateTimer(QWidget):
         self.timer_label.setFont(QFont('Arial', 48))
         self.timer_label.setAlignment(Qt.AlignCenter)
         layout.addWidget(self.timer_label)
-        
+
         # Start and Stop buttons
         self.start_button = QPushButton("Start", self)
         self.start_button.setStyleSheet("background-color: #30734C; color: white; font-size: 18px; padding: 10px;")
@@ -48,19 +62,15 @@ class FlowStateTimer(QWidget):
 
         self.setLayout(layout)
 
-        self.create_tray_icon()
-
-        # This timer updates the countdown every second
+        # Timer
         self.timer = QTimer(self)
         self.timer.timeout.connect(self.run_timer)
 
     def format_time(self, seconds):
-        """Convert seconds into minutes:seconds format."""
         mins, secs = divmod(seconds, 60)
         return f"{mins:02d}:{secs:02d}"
 
     def toggle_timer(self):
-        """Start or pause the timer."""
         if not self.running:
             self.running = True
             self.start_button.setText("Pause")
@@ -71,7 +81,6 @@ class FlowStateTimer(QWidget):
             self.timer.stop()
 
     def stop_timer(self):
-        """Stop the timer and reset."""
         self.running = False
         self.time_left = self.work_duration
         self.timer_label.setText(self.format_time(self.time_left))
@@ -80,7 +89,6 @@ class FlowStateTimer(QWidget):
         self.timer.stop()
 
     def run_timer(self):
-        """Run the countdown timer."""
         if self.time_left > 0:
             self.time_left -= 1
             self.timer_label.setText(self.format_time(self.time_left))
@@ -89,50 +97,33 @@ class FlowStateTimer(QWidget):
             self.switch_mode()
 
     def switch_mode(self):
-        """Switch between work and break modes."""
         if self.time_left == 0:
-            self.activateWindow()
             if self.mode == "Work":
                 if self.cycle_index > 2:
                     self.cycle_index = 0
                     self.mode = "Long Break"
                     self.time_left = self.long_break_duration
-                    self.mode_label.setText(self.mode)
-
-                      # Switch to break time
                 else:
                     self.cycle_index += 1
-                    self.mode = "Break"  # Switch to break time
+                    self.mode = "Break"
                     self.time_left = self.break_duration
-                    self.mode_label.setText(self.mode)
-
             else:
-                self.mode = "Work"  # Switch back to work time
+                self.mode = "Work"
                 self.time_left = self.work_duration
-                self.mode_label.setText(self.mode)
-            self.timer.start(1000)  # Start the new mode timer
+
+            self.mode_label.setText(self.mode)
+            self.timer.start(1000)
 
     def play_alarm(self):
-        """Play an alarm sound when the timer finishes."""
         playsound("assets/alert1.mp3")
 
-    def create_tray_icon(self):
-        """Create the system tray icon."""
-        tray_icon = QSystemTrayIcon(QIcon('assets/timer_icon.png'), self)
-        tray_icon.setToolTip("FlowState Timer")
-
-        quit_action = lambda: sys.exit()
-        pause_action = lambda: self.toggle_timer()  # Pause/Resume action
-        menu = QMenu()
-
-        pause_action_item = menu.addAction("Pause/Resume")
-        pause_action_item.triggered.connect(pause_action)
-
-        quit_action_item = menu.addAction("Quit")
-        quit_action_item.triggered.connect(quit_action)
-
-        tray_icon.setContextMenu(menu)
-        tray_icon.show()
+    def change_theme(self, color_list):
+        primary_color, secondary_color, text_color = color_list
+        self.setStyleSheet(f"background-color: {primary_color}; color: {text_color};")
+        self.start_button.setStyleSheet(f"background-color: {secondary_color}; color: {text_color}; font-size: 18px; padding: 10px;")
+        self.stop_button.setStyleSheet(f"background-color: {secondary_color}; color: {text_color}; font-size: 18px; padding: 10px;")
+        self.mode_label.setStyleSheet(f"color: {text_color};")
+        self.timer_label.setStyleSheet(f"color: {text_color};")
 
 def main():
     app = QApplication(sys.argv)
